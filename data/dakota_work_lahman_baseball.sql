@@ -86,9 +86,74 @@
 -- WHERE decades NOT LIKE 'Before 1920s'
 -- ORDER BY decades;
 
-			 
+
+-- Question 7 - Between 1970 - 2016, find the team who had the most wins but didn't win a world series.
+-- 		     Within the same timeframe, find the team who had the least wins but won a world series.
+
+--7a
+
+-- SELECT teamid, yearid, w, wswin
+-- FROM teams
+-- WHERE w IN (SELECT MAX(w)
+-- 		    FROM teams
+-- 			WHERE yearid BETWEEN 1970 AND 2016 
+-- 		    AND wswin = 'N')
+-- AND yearid BETWEEN 1970 AND 2016
+-- AND wswin = 'N'
+-- UNION
+-- SELECT teamid, yearid, w, wswin
+-- FROM teams
+-- WHERE w IN (SELECT MIN(w)
+-- 		    FROM teams
+-- 			WHERE yearid BETWEEN 1970 AND 2016
+-- 			AND wswin = 'Y')
+-- AND yearid BETWEEN 1970 AND 2016
+-- AND wswin = 'Y'
+
+-- --7b
+
+-- SELECT teamid, yearid, w, wswin
+-- FROM teams
+-- WHERE w IN (SELECT MIN(w)
+-- 		    FROM teams
+-- 			WHERE yearid BETWEEN 1970 AND 2016
+-- 		    AND yearid <> 1981
+-- 			AND wswin = 'Y')
+-- AND yearid BETWEEN 1970 AND 2016
+-- AND wswin = 'Y'
+
+-- 7c
+
+-- WITH max_winner AS (SELECT yearid, MAX(w) AS max_wins_in_season
+-- 					FROM teams FULL JOIN (SELECT yearid, wswin, w AS win_total 
+-- 				 	  					  FROM teams
+-- 				      					  WHERE yearid BETWEEN 1970 AND 2016
+-- 				 	  					  AND wswin = 'Y'
+-- 				 	  				      GROUP BY yearid, wswin, w) AS winners USING (yearid)
+-- 					WHERE yearid BETWEEN 1970 AND 2016
+-- 					GROUP BY yearid, win_total
+-- 					HAVING MAX(w) = win_total
+-- 					ORDER BY yearid)
+					
+					
+-- SELECT ROUND(((COUNT(mw.*)::decimal / COUNT(wsw.*)::decimal) * 100), 2) AS percentage_max_winners
+-- FROM max_winner AS mw FULL JOIN (SELECT yearid, wswin
+-- 				   				 FROM teams
+-- 				   				 WHERE yearid BETWEEN 1970 AND 2016
+-- 				   				 AND wswin = 'Y'
+-- 				   				 GROUP BY yearid, wswin) AS wsw USING (yearid)
 
 
+
+-- Question 9 - Just an attempt, I don't believe this is the final answer.
+
+-- SELECT playerid, namefirst, namelast, teamid
+-- FROM awardsmanagers AS am INNER JOIN people USING (playerid)
+-- INNER JOIN managershalf USING (playerid)
+-- INNER JOIN teams USING (teamid)
+-- WHERE am.lgid IN ('NL', 'AL')
+-- AND am.awardid ILIKE 'TSN Manager of the Year'
+-- GROUP BY playerid, namefirst, namelast, teamid
 
 
 
@@ -97,27 +162,20 @@
 -- 			  Only consider players who hit at least 1 home run.
 
 
-
-						
--- WITH career_high_hr AS (SELECT playerid, yearid, 
--- 						SUM(hr) OVER(PARTITION BY playerid, yearid
--- 									 ORDER BY yearid
--- 									 LIMIT 1) AS sum_hr
--- 				       FROM batting
--- 				       GROUP BY playerid, yearid
--- 					   ORDER BY sum_hr DESC)
-					   
--- SELECT playerid, yearid, MAX(sum_hr) AS career_high
--- FROM career_high_hr
--- GROUP BY playerid, yearid
--- ORDER BY career_high DESC
+-- SELECT playerid, namefirst, namelast, MAX(sum_hr) AS career_high_hr
+-- FROM batting AS b INNER JOIN (SELECT playerid, yearid, SUM(hr) AS sum_hr
+-- 						 	  FROM batting
+-- 						 	  GROUP BY playerid, yearid
+-- 						 	  ORDER BY sum_hr DESC) AS total_hr USING (playerid)
+-- INNER JOIN people AS p USING (playerid)
+-- WHERE b.yearid = 2016
+-- AND EXTRACT(year FROM p.debut::date) <= 2006
+-- GROUP BY playerid, namefirst, namelast, hr
+-- HAVING SUM(hr) > 0
+-- AND MAX(sum_hr) = hr
+-- ORDER BY career_high_hr DESC
 
 
--- SELECT playerid, namefirst, namelast, yearid, total_hr AS career_high_hr
--- FROM batting INNER JOIN people USING (playerid)
--- INNER JOIN career_high_hr USING (playerid)
--- WHERE EXTRACT(year FROM debut::date) <= 2006
--- AND batting.yearid = 2016
--- AND hr > 0
- 
- --QUESTION 10 NOT COMPLETED!
+
+
+
